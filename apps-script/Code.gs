@@ -14,6 +14,7 @@ function doGet() {
 function getDashboardData() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   if (!ss) throw new Error('Bind this Apps Script project to the Google Sheets copy of the calling workbook.');
+  var spreadsheetTimeZone = spreadsheetTimeZone_(ss);
   var costsSheet = requireSheet_(ss, 'Sheet3');
   var usesSheet = requireSheet_(ss, 'Sheet1');
   var teamsSheet = requireSheet_(ss, 'Team wise');
@@ -26,7 +27,7 @@ function getDashboardData() {
       bu: String(r[0] || ''),
       dialer: String(r[1] || ''),
       function: String(r[3] || ''),
-      month: r[4] instanceof Date ? Utilities.formatDate(r[4], ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : String(r[4] || ''),
+      month: r[4] instanceof Date ? Utilities.formatDate(r[4], spreadsheetTimeZone, 'yyyy-MM-dd') : String(r[4] || ''),
       agents: num_(r[5]), supervisors: num_(r[6]), admins: num_(r[7]),
       primary: num_(r[8]), secondary: num_(r[9]), mobile: num_(r[10]), dids: num_(r[11]),
       total: num_(r[12])
@@ -67,6 +68,14 @@ function num_(value) {
   return isFinite(n) ? n : 0;
 }
 function isNum_(value) { return typeof value === 'number' && isFinite(value); }
+function spreadsheetTimeZone_(ss) {
+  var timeZone = '';
+  try { timeZone = ss.getSpreadsheetTimeZone(); } catch (e) {}
+  if (typeof timeZone !== 'string' || !timeZone.trim()) {
+    try { timeZone = Session.getScriptTimeZone(); } catch (e) {}
+  }
+  return typeof timeZone === 'string' && timeZone.trim() ? timeZone : 'Asia/Kolkata';
+}
 function safeJson_(value) {
   return JSON.stringify(value).replace(/[<>&\u2028\u2029]/g, function(c) {
     return {'<':'\\u003c','>':'\\u003e','&':'\\u0026','\u2028':'\\u2028','\u2029':'\\u2029'}[c];
